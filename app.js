@@ -165,8 +165,8 @@ function updateMarkerIcons(selectedId = null) {
     const cu = isCompletelyUnknown(pk);
     let small, dim;
     if (isSelected)        { small = false; dim = false; }
-    else if (someSelected) { small = true;  dim = cu; }
-    else                   { small = cu;    dim = cu; }
+    else if (someSelected) { small = true;  dim = false; }
+    else                   { small = cu;    dim = false; }
     m.setIcon(makeIcon(pk.type, { small, dim }));
   });
 }
