@@ -36,10 +36,32 @@ header {
   margin-bottom: 12px;
 }
 
+.header-brand { display: flex; align-items: center; gap: 10px; }
+.app-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+
 h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.3px; }
 .subtitle { font-size: 0.72rem; color: rgba(255,255,255,0.5); margin-top: 2px; }
 
 .header-actions { display: flex; align-items: center; gap: 10px; }
+
+.author-link {
+  display: flex; align-items: center; gap: 7px;
+  color: rgba(255,255,255,0.7);
+  text-decoration: none;
+  font-size: 0.73rem;
+  font-weight: 500;
+  transition: color 0.15s;
+  flex-shrink: 0;
+}
+.author-link:hover { color: white; }
+.author-avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid rgba(255,255,255,0.3);
+  flex-shrink: 0;
+}
+@media (max-width: 380px) { .author-name { display: none; } }
 
 #geo-btn {
   background: rgba(255,255,255,0.12);
@@ -125,7 +147,7 @@ h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.3px; }
 
 /* ── Cards ── */
 main {
-  padding: 14px 12px 40px;
+  padding: 14px 12px 52px;
   max-width: 640px;
   margin: 0 auto;
 }
@@ -239,4 +261,18 @@ main {
   padding: 40px 20px;
   color: var(--muted);
   font-size: 0.88rem;
+}
+
+/* ── Dev banner ── */
+.dev-banner {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: #facc15;
+  color: #1a1a1a;
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 7px 16px;
+  z-index: 2000;
+  letter-spacing: 0.2px;
 }

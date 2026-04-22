@@ -15,6 +15,8 @@ let allParkings = [];
 let userCoords = null;
 let activeFilter = "tous";
 const markers = {};
+let selectedParking = null;
+let proximityCircles = [];
 
 // ── Map ────────────────────────────────────────────────────────────────────
 const map = L.map("map").setView([45.5245, -73.5757], 14);
@@ -89,14 +91,52 @@ async function fetchParkings() {
 // ── Map icons ──────────────────────────────────────────────────────────────
 const iconColor = { gratuit: "#2e7d52", payant: "#c9581a", mixte: "#1d6fa4", inconnu: "#7a7a8a" };
 
-function makeIcon(type) {
+function makeIcon(type, { small = false, dim = false } = {}) {
   const c = iconColor[type] || "#888";
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 40" width="28" height="40">
+  const w = small ? 18 : 28;
+  const h = small ? 26 : 40;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 40" width="${w}" height="${h}" style="opacity:${dim ? 0.35 : 1}">
     <path d="M14 0C6.268 0 0 6.268 0 14c0 9.333 14 26 14 26S28 23.333 28 14C28 6.268 21.732 0 14 0z"
       fill="${c}" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>
-    <text x="14" y="19" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="sans-serif">P</text>
+    <text x="14" y="19" text-anchor="middle" font-size="${small ? 8 : 11}" font-weight="bold" fill="white" font-family="sans-serif">P</text>
   </svg>`;
-  return L.divIcon({ html: svg, iconSize: [28, 40], iconAnchor: [14, 40], popupAnchor: [0, -42], className: "" });
+  return L.divIcon({ html: svg, iconSize: [w, h], iconAnchor: [w / 2, h], popupAnchor: [0, -(h + 2)], className: "" });
+}
+
+function isCompletelyUnknown(p) {
+  return p.type === "inconnu" && !p.heures && !p.places && !p.adresse && !p.notes;
+}
+
+function updateMarkerIcons(selectedId = null) {
+  const someSelected = selectedId !== null;
+  allParkings.forEach((pk) => {
+    const m = markers[pk.id];
+    if (!m) return;
+    const isSelected = pk.id === selectedId;
+    const cu = isCompletelyUnknown(pk);
+    let small, dim;
+    if (isSelected)        { small = false; dim = false; }
+    else if (someSelected) { small = true;  dim = cu; }
+    else                   { small = cu;    dim = cu; }
+    m.setIcon(makeIcon(pk.type, { small, dim }));
+  });
+}
+
+function selectParking(p) {
+  selectedParking = p;
+  updateMarkerIcons(p.id);
+  proximityCircles.forEach((c) => map.removeLayer(c));
+  proximityCircles = [
+    L.circle(p.coords, { radius: 1000, color: "#2e7d52", weight: 2, fillColor: "#2e7d52", fillOpacity: 0.07 }).addTo(map),
+    L.circle(p.coords, { radius: 3750, color: "#1d6fa4", weight: 2, fillColor: "#1d6fa4", fillOpacity: 0.04 }).addTo(map),
+  ];
+}
+
+function deselectParking() {
+  selectedParking = null;
+  updateMarkerIcons(null);
+  proximityCircles.forEach((c) => map.removeLayer(c));
+  proximityCircles = [];
 }
 
 // ── Geolocation ────────────────────────────────────────────────────────────
@@ -203,6 +243,7 @@ function render(filter) {
       card.classList.add("active");
       map.flyTo(p.coords, 17, { duration: 0.5 });
       markers[p.id]?.openPopup();
+      selectParking(p);
     });
 
     list.appendChild(card);
@@ -227,6 +268,7 @@ document.querySelectorAll(".filter-btn").forEach((btn) => {
     allParkings.forEach((p) => {
       const m = L.marker(p.coords, { icon: makeIcon(p.type) })
         .addTo(map)
+        .on("click", () => selectParking(p))
         .bindPopup(`
           <div class="popup-name">${p.nom}</div>
           <span class="popup-badge ${p.type}">${p.type}</span>
@@ -240,6 +282,11 @@ document.querySelectorAll(".filter-btn").forEach((btn) => {
 
     document.getElementById("loading").remove();
     render("tous");
+    updateMarkerIcons();
+    map.on("click", () => {
+      document.querySelectorAll(".card").forEach((c) => c.classList.remove("active"));
+      deselectParking();
+    });
   } catch (err) {
     document.getElementById("loading").innerHTML =
       `<p style="color:#c00">Erreur de chargement.<br>Vérifiez votre connexion.</p>`;
