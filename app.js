@@ -10,6 +10,13 @@ const OVERPASS_QUERY = `[out:json][timeout:30];
 );
 out center tags;`;
 
+const CYCLING_QUERY = `[out:json][timeout:30];
+(
+  way["highway"="cycleway"](${BOUNDS});
+  way["cycleway"~"lane|track|shared_lane"](${BOUNDS});
+);
+out geom;`;
+
 // ── State ──────────────────────────────────────────────────────────────────
 let allParkings = [];
 let userCoords = null;
@@ -17,6 +24,11 @@ let activeFilter = "tous";
 const markers = {};
 let selectedParking = null;
 let proximityCircles = [];
+let cyclingLayer = null;
+
+const STYLE_CYCLING_DEFAULT   = { color: "#16a34a", weight: 2.5, opacity: 0.3,  dashArray: "6 4" };
+const STYLE_CYCLING_HIGHLIGHT = { color: "#16a34a", weight: 4.5, opacity: 0.95, dashArray: null };
+const STYLE_CYCLING_DIM       = { color: "#16a34a", weight: 1,   opacity: 0.06, dashArray: "6 4" };
 
 // ── Map ────────────────────────────────────────────────────────────────────
 const map = L.map("map").setView([45.5245, -73.5757], 14);
@@ -88,6 +100,43 @@ async function fetchParkings() {
   return data.elements.map(processElement).filter(Boolean);
 }
 
+async function fetchCyclingPaths() {
+  const url = "https://overpass-api.de/api/interpreter";
+  const res = await fetch(url, {
+    method: "POST",
+    body: "data=" + encodeURIComponent(CYCLING_QUERY),
+  });
+  const data = await res.json();
+  return {
+    type: "FeatureCollection",
+    features: data.elements
+      .filter((e) => e.geometry && e.geometry.length > 1)
+      .map((e) => ({
+        type: "Feature",
+        properties: { id: e.id },
+        geometry: { type: "LineString", coordinates: e.geometry.map((n) => [n.lon, n.lat]) },
+      })),
+  };
+}
+
+function segmentNearParking(feature, center, radiusMeters) {
+  return feature.geometry.coordinates.some(([lon, lat]) =>
+    haversine(center[0], center[1], lat, lon) <= radiusMeters
+  );
+}
+
+function updateCyclingHighlight(parkingCoords) {
+  if (!cyclingLayer) return;
+  cyclingLayer.eachLayer((layer) => {
+    if (!parkingCoords) {
+      layer.setStyle(STYLE_CYCLING_DEFAULT);
+    } else {
+      const near = segmentNearParking(layer.feature, parkingCoords, 1000);
+      layer.setStyle(near ? STYLE_CYCLING_HIGHLIGHT : STYLE_CYCLING_DIM);
+    }
+  });
+}
+
 // ── Map icons ──────────────────────────────────────────────────────────────
 const iconColor = { gratuit: "#2e7d52", payant: "#c9581a", mixte: "#1d6fa4", inconnu: "#7a7a8a" };
 
@@ -122,19 +171,41 @@ function updateMarkerIcons(selectedId = null) {
   });
 }
 
+function pointOnCircle(center, radiusMeters, bearingDeg) {
+  const R = 6371000;
+  const lat1 = center[0] * Math.PI / 180;
+  const lon1 = center[1] * Math.PI / 180;
+  const b = bearingDeg * Math.PI / 180;
+  const d = radiusMeters / R;
+  const lat2 = Math.asin(Math.sin(lat1) * Math.cos(d) + Math.cos(lat1) * Math.sin(d) * Math.cos(b));
+  const lon2 = lon1 + Math.atan2(Math.sin(b) * Math.sin(d) * Math.cos(lat1), Math.cos(d) - Math.sin(lat1) * Math.sin(lat2));
+  return [lat2 * 180 / Math.PI, lon2 * 180 / Math.PI];
+}
+
+function makeCircleLabel(emoji, text, color) {
+  const html = `<div style="background:white;border:2px solid ${color};border-radius:12px;padding:3px 9px;font-size:0.72rem;font-weight:700;color:${color};white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,0.18);display:inline-flex;align-items:center;gap:4px;pointer-events:none;">${emoji} ${text}</div>`;
+  return L.divIcon({ html, className: "", iconAnchor: [0, 12] });
+}
+
 function selectParking(p) {
   selectedParking = p;
   updateMarkerIcons(p.id);
+  updateCyclingHighlight(p.coords);
   proximityCircles.forEach((c) => map.removeLayer(c));
+  const walkPos = pointOnCircle(p.coords, 1000, 45);
+  const bikePos = pointOnCircle(p.coords, 3750, 45);
   proximityCircles = [
     L.circle(p.coords, { radius: 1000, color: "#2e7d52", weight: 2, fillColor: "#2e7d52", fillOpacity: 0.07 }).addTo(map),
     L.circle(p.coords, { radius: 3750, color: "#1d6fa4", weight: 2, fillColor: "#1d6fa4", fillOpacity: 0.04 }).addTo(map),
+    L.marker(walkPos, { icon: makeCircleLabel("🚶", "15 min", "#2e7d52"), interactive: false, keyboard: false }).addTo(map),
+    L.marker(bikePos, { icon: makeCircleLabel("🚴", "15 min", "#1d6fa4"), interactive: false, keyboard: false }).addTo(map),
   ];
 }
 
 function deselectParking() {
   selectedParking = null;
   updateMarkerIcons(null);
+  updateCyclingHighlight(null);
   proximityCircles.forEach((c) => map.removeLayer(c));
   proximityCircles = [];
 }
@@ -263,6 +334,14 @@ document.querySelectorAll(".filter-btn").forEach((btn) => {
 (async () => {
   try {
     allParkings = await fetchParkings();
+
+    // Cycling paths load in background — markers stay on top (markerPane > overlayPane)
+    fetchCyclingPaths()
+      .then((geojson) => {
+        cyclingLayer = L.geoJSON(geojson, { style: STYLE_CYCLING_DEFAULT }).addTo(map);
+        if (selectedParking) updateCyclingHighlight(selectedParking.coords);
+      })
+      .catch((err) => console.warn("Pistes cyclables indisponibles :", err));
 
     // Create markers
     allParkings.forEach((p) => {
