@@ -26,8 +26,8 @@ let selectedParking = null;
 let proximityCircles = [];
 let cyclingLayer = null;
 
-const STYLE_CYCLING_DEFAULT   = { color: "#16a34a", weight: 2.5, opacity: 0.3,  dashArray: "6 4" };
-const STYLE_CYCLING_HIGHLIGHT = { color: "#16a34a", weight: 4.5, opacity: 0.95, dashArray: null };
+const STYLE_CYCLING_DEFAULT   = { color: "#16a34a", weight: 1.5, opacity: 0.3,  dashArray: "6 4" };
+const STYLE_CYCLING_HIGHLIGHT = { color: "#16a34a", weight: 3,   opacity: 0.95, dashArray: null };
 const STYLE_CYCLING_DIM       = { color: "#16a34a", weight: 1,   opacity: 0.06, dashArray: "6 4" };
 
 // ── Map ────────────────────────────────────────────────────────────────────
@@ -195,10 +195,10 @@ function selectParking(p) {
   const walkPos = pointOnCircle(p.coords, 1000, 45);
   const bikePos = pointOnCircle(p.coords, 2500, 45);
   proximityCircles = [
-    L.circle(p.coords, { radius: 1000, color: "#2e7d52", weight: 2, fillColor: "#2e7d52", fillOpacity: 0.07 }).addTo(map),
-    L.circle(p.coords, { radius: 2500, color: "#1d6fa4", weight: 2, fillColor: "#1d6fa4", fillOpacity: 0.04 }).addTo(map),
-    L.marker(walkPos, { icon: makeCircleLabel("🚶", "15 min", "#2e7d52"), interactive: false, keyboard: false }).addTo(map),
-    L.marker(bikePos, { icon: makeCircleLabel("🚴", "10 min", "#1d6fa4"), interactive: false, keyboard: false }).addTo(map),
+    L.circle(p.coords, { radius: 1000, color: "#1d6fa4", weight: 2, fillColor: "#1d6fa4", fillOpacity: 0.07 }).addTo(map),
+    L.circle(p.coords, { radius: 2500, color: "#2e7d52", weight: 2, fillColor: "#2e7d52", fillOpacity: 0.04 }).addTo(map),
+    L.marker(walkPos, { icon: makeCircleLabel("🚶", "15 min", "#1d6fa4"), interactive: false, keyboard: false }).addTo(map),
+    L.marker(bikePos, { icon: makeCircleLabel("🚴", "10 min", "#2e7d52"), interactive: false, keyboard: false }).addTo(map),
   ];
 }
 
