@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stationnement Hors Rue — Plateau-Mont-Royal</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <div>
+        <h1>Stationnement Plateau</h1>
+        <p class="subtitle">Montréal · Hors rue uniquement</p>
+      </div>
+      <div class="header-actions">
+        <button id="geo-btn" title="Trier par distance">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+          </svg>
+        </button>
+        <span id="count-badge">—</span>
+      </div>
+    </div>
+    <div class="filters">
+      <button class="filter-btn active" data-filter="tous">Tous</button>
+      <button class="filter-btn" data-filter="gratuit">Gratuit</button>
+      <button class="filter-btn" data-filter="mixte">Mixte</button>
+      <button class="filter-btn" data-filter="payant">Payant</button>
+      <button class="filter-btn" data-filter="inconnu">?</button>
+    </div>
+  </header>
+
+  <div id="map">
+    <div id="loading">
+      <div class="spinner"></div>
+      <p>Chargement des données OSM…</p>
+    </div>
+  </div>
+
+  <main>
+    <div id="parking-list"></div>
+    <p class="disclaimer">Données <a href="https://www.openstreetmap.org" target="_blank">OpenStreetMap</a> · Qualité variable, à valider sur le terrain</p>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
