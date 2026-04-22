@@ -263,6 +263,30 @@ main {
   font-size: 0.88rem;
 }
 
+/* ── List toggle ── */
+.list-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--card);
+  border: none;
+  border-top: 1px solid #e8e8e3;
+  border-bottom: 1px solid #e8e8e3;
+  padding: 7px 16px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.12s;
+}
+.list-toggle:hover { background: #f0f0eb; }
+.list-toggle svg { transition: transform 0.22s ease; flex-shrink: 0; }
+body.map-focus .list-toggle svg { transform: rotate(180deg); }
+body.map-focus main { display: none; }
+
 /* ── Dev banner ── */
 .dev-banner {
   position: fixed;

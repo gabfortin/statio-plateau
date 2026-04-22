@@ -321,6 +321,22 @@ function render(filter) {
   });
 }
 
+// ── List toggle ────────────────────────────────────────────────────────────
+document.getElementById("list-toggle").addEventListener("click", () => {
+  const focused = document.body.classList.toggle("map-focus");
+  document.getElementById("list-toggle-label").textContent = focused ? "Stationnements" : "Liste";
+  const mapEl = document.getElementById("map");
+  if (focused) {
+    const headerH = document.querySelector("header").offsetHeight;
+    const toggleH = document.getElementById("list-toggle").offsetHeight;
+    const bannerH = document.querySelector(".dev-banner").offsetHeight;
+    mapEl.style.height = `calc(100dvh - ${headerH + toggleH + bannerH}px)`;
+  } else {
+    mapEl.style.height = "";
+  }
+  map.invalidateSize();
+});
+
 // ── Filters ────────────────────────────────────────────────────────────────
 document.querySelectorAll(".filter-btn").forEach((btn) => {
   btn.addEventListener("click", () => {
