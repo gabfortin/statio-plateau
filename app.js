@@ -193,12 +193,12 @@ function selectParking(p) {
   updateCyclingHighlight(p.coords);
   proximityCircles.forEach((c) => map.removeLayer(c));
   const walkPos = pointOnCircle(p.coords, 1000, 45);
-  const bikePos = pointOnCircle(p.coords, 3750, 45);
+  const bikePos = pointOnCircle(p.coords, 2500, 45);
   proximityCircles = [
     L.circle(p.coords, { radius: 1000, color: "#2e7d52", weight: 2, fillColor: "#2e7d52", fillOpacity: 0.07 }).addTo(map),
-    L.circle(p.coords, { radius: 3750, color: "#1d6fa4", weight: 2, fillColor: "#1d6fa4", fillOpacity: 0.04 }).addTo(map),
+    L.circle(p.coords, { radius: 2500, color: "#1d6fa4", weight: 2, fillColor: "#1d6fa4", fillOpacity: 0.04 }).addTo(map),
     L.marker(walkPos, { icon: makeCircleLabel("🚶", "15 min", "#2e7d52"), interactive: false, keyboard: false }).addTo(map),
-    L.marker(bikePos, { icon: makeCircleLabel("🚴", "15 min", "#1d6fa4"), interactive: false, keyboard: false }).addTo(map),
+    L.marker(bikePos, { icon: makeCircleLabel("🚴", "10 min", "#1d6fa4"), interactive: false, keyboard: false }).addTo(map),
   ];
 }
 
