@@ -333,15 +333,15 @@ document.querySelectorAll(".filter-btn").forEach((btn) => {
 // ── Init ───────────────────────────────────────────────────────────────────
 (async () => {
   try {
-    allParkings = await fetchParkings();
-
-    // Cycling paths load in background — markers stay on top (markerPane > overlayPane)
-    fetchCyclingPaths()
+    // Both requests fire simultaneously
+    const cyclingPromise = fetchCyclingPaths()
       .then((geojson) => {
         cyclingLayer = L.geoJSON(geojson, { style: STYLE_CYCLING_DEFAULT }).addTo(map);
         if (selectedParking) updateCyclingHighlight(selectedParking.coords);
       })
       .catch((err) => console.warn("Pistes cyclables indisponibles :", err));
+
+    allParkings = await fetchParkings();
 
     // Create markers
     allParkings.forEach((p) => {
