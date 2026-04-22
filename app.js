@@ -140,11 +140,20 @@ function updateCyclingHighlight(parkingCoords) {
 // ── Map icons ──────────────────────────────────────────────────────────────
 const iconColor = { gratuit: "#2e7d52", payant: "#c9581a", mixte: "#1d6fa4", inconnu: "#7a7a8a" };
 
-function makeIcon(type, { small = false, dim = false } = {}) {
+function makeIcon(type, { small = false, dot = false } = {}) {
   const c = iconColor[type] || "#888";
+
+  if (dot) {
+    const r = 7;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${r * 2}" height="${r * 2}">
+      <circle cx="${r}" cy="${r}" r="${r - 1.5}" fill="${c}" stroke="white" stroke-width="1.5"/>
+    </svg>`;
+    return L.divIcon({ html: svg, iconSize: [r * 2, r * 2], iconAnchor: [r, r], className: "" });
+  }
+
   const w = small ? 18 : 28;
   const h = small ? 26 : 40;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 40" width="${w}" height="${h}" style="opacity:${dim ? 0.35 : 1}">
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 40" width="${w}" height="${h}">
     <path d="M14 0C6.268 0 0 6.268 0 14c0 9.333 14 26 14 26S28 23.333 28 14C28 6.268 21.732 0 14 0z"
       fill="${c}" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>
     <text x="14" y="19" text-anchor="middle" font-size="${small ? 8 : 11}" font-weight="bold" fill="white" font-family="sans-serif">P</text>
@@ -163,11 +172,9 @@ function updateMarkerIcons(selectedId = null) {
     if (!m) return;
     const isSelected = pk.id === selectedId;
     const cu = isCompletelyUnknown(pk);
-    let small, dim;
-    if (isSelected)        { small = false; dim = false; }
-    else if (someSelected) { small = true;  dim = false; }
-    else                   { small = cu;    dim = false; }
-    m.setIcon(makeIcon(pk.type, { small, dim }));
+    if (isSelected)        m.setIcon(makeIcon(pk.type));
+    else if (someSelected) m.setIcon(makeIcon(pk.type, { dot: true }));
+    else                   m.setIcon(makeIcon(pk.type, { small: cu }));
   });
 }
 
