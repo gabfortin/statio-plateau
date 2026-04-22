@@ -131,7 +131,7 @@ function updateCyclingHighlight(parkingCoords) {
     if (!parkingCoords) {
       layer.setStyle(STYLE_CYCLING_DEFAULT);
     } else {
-      const near = segmentNearParking(layer.feature, parkingCoords, 1000);
+      const near = segmentNearParking(layer.feature, parkingCoords, 2500);
       layer.setStyle(near ? STYLE_CYCLING_HIGHLIGHT : STYLE_CYCLING_DIM);
     }
   });
