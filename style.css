@@ -246,6 +246,7 @@ main {
 .popup-badge.payant  { background: #fdf0e6; color: var(--orange); }
 .popup-badge.mixte   { background: #e6f2fa; color: var(--blue); }
 .popup-badge.inconnu { background: #f0f0f0; color: var(--grey); }
+.popup-address { font-size: 0.78rem; color: var(--muted); margin-top: 5px; }
 
 .disclaimer {
   margin-top: 18px;

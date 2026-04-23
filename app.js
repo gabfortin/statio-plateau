@@ -199,8 +199,8 @@ function selectParking(p) {
   updateMarkerIcons(p.id);
   updateCyclingHighlight(p.coords);
   proximityCircles.forEach((c) => map.removeLayer(c));
-  const walkPos = pointOnCircle(p.coords, 1000, 45);
-  const bikePos = pointOnCircle(p.coords, 2500, 45);
+  const walkPos = pointOnCircle(p.coords, 1000, 90);
+  const bikePos = pointOnCircle(p.coords, 2500, 90);
   proximityCircles = [
     L.circle(p.coords, { radius: 1000, color: "#1d6fa4", weight: 2, fillColor: "#1d6fa4", fillOpacity: 0.07 }).addTo(map),
     L.circle(p.coords, { radius: 2500, color: "#2e7d52", weight: 2, fillColor: "#2e7d52", fillOpacity: 0.04 }).addTo(map),
@@ -374,7 +374,7 @@ document.querySelectorAll(".filter-btn").forEach((btn) => {
         .bindPopup(`
           <div class="popup-name">${p.nom}</div>
           <span class="popup-badge ${p.type}">${p.type}</span>
-          ${p.adresse ? `<div>${p.adresse}</div>` : ""}
+          ${p.adresse ? `<div class="popup-address">📍 ${p.adresse}</div>` : ""}
           ${p.tarif ? `<div><strong>${p.tarif}</strong></div>` : ""}
           ${p.heures ? `<div>🕐 ${p.heures}</div>` : ""}
           ${p.places ? `<div>🚗 ${p.places} places</div>` : ""}
