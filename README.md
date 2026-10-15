@@ -11,7 +11,7 @@ Carte interactive des stationnements hors-rue publics du Plateau-Mont-Royal à M
 
 ## Démo
 
-[Voir l'app sur GitHub Pages](https://gabfortin.github.io/plateau-parking)
+[parking.gabfortin.com](https://parking.gabfortin.com)
 
 ## Utilisation locale
 
@@ -27,7 +27,11 @@ Puis ouvrir [http://localhost:8765](http://localhost:8765).
 
 - [Leaflet.js](https://leafletjs.com) — carte interactive
 - [OpenStreetMap](https://www.openstreetmap.org) / [Overpass API](https://overpass-api.de) — données de stationnement
-- [CARTO](https://carto.com) — tuiles de carte
+- [OpenStreetMap](https://www.openstreetmap.org) — tuiles de carte
+
+## Auteur
+
+Conçu par [Gabriel Fortin](https://gabfortin.com), conseiller d'arrondissement du Plateau-Mont-Royal (district de Jeanne-Mance). Projet personnel, non officiel : ce site n'est pas un service de l'arrondissement ni de la Ville de Montréal.
 
 ## Données
 

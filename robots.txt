@@ -1,0 +1,34 @@
+# Stationnement Plateau — https://parking.gabfortin.com
+# Tous les robots sont les bienvenus, y compris les assistants IA.
+User-agent: *
+Allow: /
+
+# Explicitly welcome AI crawlers and answer engines
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+Sitemap: https://parking.gabfortin.com/sitemap.xml
