@@ -533,9 +533,65 @@ body.map-focus .sheet-body { opacity: 0; pointer-events: none; }
 .btn-primary:active, .btn-ghost:active { transform: scale(0.96); }
 
 /* ── Map elements ── */
-.pin { transition: opacity 0.2s; }
-.pin svg { filter: drop-shadow(0 3px 4px rgba(15, 23, 42, 0.3)); display: block; }
-.pin-faded { opacity: 0.45; }
+/* Teardrop pins, same family as Avant / Après and carte-au */
+.pin-marker {
+  position: relative;
+  animation: marker-pop 0.45s var(--ease) backwards;
+}
+/* Only pop on first load, not every time a selection rebuilds the icons */
+.markers-settled .pin-marker { animation: none; }
+
+.pin-marker .pin {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50% 50% 50% 0;
+  background: linear-gradient(140deg, var(--pin-light), var(--pin-dark));
+  transform: rotate(-45deg);
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  box-shadow: 0 6px 14px -4px var(--pin-dark), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+.pin-marker .pin svg { width: 13px; height: 13px; transform: rotate(45deg); }
+.pin-selected .pin svg { width: 16px; height: 16px; }
+.pin-small .pin { border-width: 1.5px; opacity: 0.75; }
+.pin-small .pin svg { width: 10px; height: 10px; }
+
+.pin-marker:hover .pin {
+  transform: rotate(-45deg) scale(1.12);
+  box-shadow: 0 10px 20px -4px var(--pin-dark);
+}
+
+.pin-marker .ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: var(--pin-light);
+  opacity: 0.35;
+  animation: pulse-ring 2.6s ease-out infinite;
+}
+
+/* While a parking is selected, the others shrink to round dots */
+.dot-marker .pin {
+  border-radius: 50%;
+  transform: none;
+  border-width: 1.5px;
+  box-shadow: 0 2px 6px -2px var(--pin-dark);
+}
+.dot-marker:hover .pin { transform: scale(1.25); }
+
+@keyframes marker-pop {
+  from { transform: scale(0.4); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+@keyframes pulse-ring {
+  0%   { transform: scale(0.6); opacity: 0.45; }
+  80%  { transform: scale(1.7); opacity: 0; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
 
 .circle-label {
   background: var(--glass-strong);

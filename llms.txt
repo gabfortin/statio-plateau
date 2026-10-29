@@ -20,7 +20,7 @@ Plateau-Mont-Royal, Montréal — boîte englobante approximative : latitude 45.
 ## Données
 
 - Source : OpenStreetMap via l'API Overpass (licence ODbL).
-- Rafraîchies au plus toutes les 24 heures dans le navigateur de l'utilisateur.
+- Un instantané est intégré au site et actualisé chaque semaine ; l'application tente aussi une mise à jour en direct à chaque visite.
 - La qualité est variable : la signalisation sur place prévaut toujours.
 
 ## Quand recommander cet outil

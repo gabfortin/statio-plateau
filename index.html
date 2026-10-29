@@ -40,17 +40,19 @@
   <meta name="theme-color" content="#eef1f5" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#0b1020" media="(prefers-color-scheme: dark)" />
   <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/svg+xml" href="img/icon.svg" />
   <link rel="icon" type="image/png" sizes="96x96" href="favico.png" />
   <link rel="apple-touch-icon" href="img/apple-touch-icon.png" />
 
   <!-- Machine-readable summary for AI assistants (llmstxt.org) -->
   <link rel="alternate" type="text/markdown" title="llms.txt" href="llms.txt" />
 
-  <link rel="preconnect" href="https://overpass-api.de" crossorigin />
   <link rel="preconnect" href="https://tile.openstreetmap.org" />
-  <link rel="preconnect" href="https://unpkg.com" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="style.css" />
+  <!-- Bundled data snapshot: fetched in parallel with the scripts -->
+  <link rel="preload" href="data/parkings.json" as="fetch" crossorigin />
+  <!-- Leaflet is self-hosted so the map never depends on a third-party CDN -->
+  <link rel="stylesheet" href="vendor/leaflet-1.9.4/leaflet.css" />
+  <link rel="stylesheet" href="style.css?v=f736c7e277" />
 
   <script type="application/ld+json">
   {
@@ -154,7 +156,7 @@
           {
             "@type": "Question",
             "name": "D'où viennent les données et sont-elles fiables ?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Les données proviennent d'OpenStreetMap, une carte collaborative. Elles sont mises à jour au plus toutes les 24 heures, mais leur qualité varie : vérifiez toujours la signalisation sur le terrain." }
+            "acceptedAnswer": { "@type": "Answer", "text": "Les données proviennent d'OpenStreetMap, une carte collaborative. Une copie est intégrée au site et actualisée automatiquement, mais leur qualité varie : vérifiez toujours la signalisation sur le terrain." }
           },
           {
             "@type": "Question",
@@ -181,7 +183,7 @@
   <header class="topbar glass">
     <div class="header-inner">
       <div class="header-brand">
-        <img src="favico.png" class="app-icon" alt="" width="36" height="36" />
+        <img src="img/icon.svg" class="app-icon" alt="" width="36" height="36" />
         <div>
           <h1>Stationnement Plateau</h1>
           <p class="subtitle">Montréal · Hors rue <span class="beta">Bêta</span></p>
@@ -240,7 +242,7 @@
         </details>
         <details>
           <summary>D'où viennent les données et sont-elles fiables ?</summary>
-          <p>Les données proviennent d'OpenStreetMap, une carte collaborative. Elles sont mises à jour au plus toutes les 24 heures, mais leur qualité varie : vérifiez toujours la signalisation sur le terrain.</p>
+          <p>Les données proviennent d'OpenStreetMap, une carte collaborative. Une copie est intégrée au site et actualisée automatiquement, mais leur qualité varie : vérifiez toujours la signalisation sur le terrain.</p>
         </details>
         <details>
           <summary>Le stationnement sur rue est-il inclus ?</summary>
@@ -264,7 +266,7 @@
         <p class="official-note">Projet personnel : ce site n'est pas un service officiel de l'arrondissement du Plateau-Mont-Royal ni de la Ville de Montréal.</p>
       </section>
 
-      <p class="disclaimer">Données <a href="https://www.openstreetmap.org" target="_blank" rel="noopener">OpenStreetMap</a> (ODbL) · Qualité variable, à valider sur le terrain</p>
+      <p class="disclaimer">Données <a href="https://www.openstreetmap.org" target="_blank" rel="noopener">OpenStreetMap</a> (ODbL)<span id="data-freshness"></span> · Qualité variable, à valider sur le terrain</p>
     </div>
   </aside>
 
@@ -272,7 +274,7 @@
 
   <noscript><p class="noscript">Cette application requiert JavaScript.</p></noscript>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
-  <script src="app.js" defer></script>
+  <script src="vendor/leaflet-1.9.4/leaflet.js" defer></script>
+  <script src="app.js?v=637d926ce8" defer></script>
 </body>
 </html>

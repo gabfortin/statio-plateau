@@ -21,16 +21,25 @@ out geom;`;
 // Main instance first, mirrors as fallback when it is overloaded
 const OVERPASS_ENDPOINTS = [
   "https://overpass-api.de/api/interpreter",
+  "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
   "https://overpass.kumi.systems/api/interpreter",
 ];
-const FETCH_TIMEOUT = 20000;
-const CACHE_TTL = 24 * 60 * 60 * 1000; // OSM data changes rarely
+const FETCH_TIMEOUT = 40000; // background request, Overpass can take 25 s+
+
+// Bundled snapshots (refreshed by scripts/update_osm_data.py) are shown instantly;
+// Overpass is only queried in the background to update them.
+// Keep the queries above in sync with scripts/update_osm_data.py.
+const DATASETS = {
+  parkings: { cacheKey: "osm:parkings:v3", snapshot: "data/parkings.json", query: OVERPASS_QUERY },
+  cycling:  { cacheKey: "osm:cycling:v2",  snapshot: "data/cycling.json",  query: CYCLING_QUERY },
+};
+const REFRESH_MIN_AGE = 60 * 60 * 1000; // don't hit Overpass if local data is < 1 h old
 
 // ── State ──────────────────────────────────────────────────────────────────
 let map = null;
 let allParkings = [];
 const parkingsById = new Map();
-const markers = {};
+let markers = {};
 let userCoords = null;
 let activeFilter = "tous";
 let selectedParking = null;
@@ -87,13 +96,6 @@ function hideOverlay() {
   setTimeout(() => (overlay.hidden = true), 500); // in case transitionend never fires
 }
 
-function timeAgo(ms) {
-  const h = Math.round(ms / 3600000);
-  if (h < 1) return "moins d'une heure";
-  if (h < 48) return `${h} h`;
-  return `${Math.round(h / 24)} jours`;
-}
-
 // ── Fetch ──────────────────────────────────────────────────────────────────
 function readCache(key) {
   try { return JSON.parse(localStorage.getItem(key)); } catch { return null; }
@@ -113,35 +115,70 @@ async function fetchWithTimeout(url, options, ms) {
   }
 }
 
-// Overpass query with localStorage cache, mirror fallback, and stale-cache fallback.
-// Returns { elements, stale } where stale is the cache age in ms (or 0 if fresh).
-async function overpass(key, query) {
-  const cached = readCache(key);
-  if (cached && Date.now() - cached.t < CACHE_TTL) return { elements: cached.data, stale: 0 };
-
-  let lastErr = null;
-  if (navigator.onLine !== false) {
-    for (const endpoint of OVERPASS_ENDPOINTS) {
-      try {
-        const res = await fetchWithTimeout(endpoint, {
-          method: "POST",
-          body: "data=" + encodeURIComponent(query),
-        }, FETCH_TIMEOUT);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
-        if (!Array.isArray(json.elements)) throw new Error("Réponse Overpass invalide");
-        writeCache(key, json.elements);
-        return { elements: json.elements, stale: 0 };
-      } catch (err) {
-        lastErr = err;
-      }
+// Best local copy: whichever of the browser cache and the bundled snapshot is newer.
+// Returns { t, data } or null.
+async function loadLocal(ds) {
+  const cached = readCache(ds.cacheKey);
+  let snapshot = null;
+  try {
+    const res = await fetch(ds.snapshot); // same request as the <link rel="preload">
+    if (res.ok) {
+      const json = await res.json();
+      if (Array.isArray(json.elements)) snapshot = { t: Date.parse(json.generated) || 0, data: json.elements };
     }
-  } else {
-    lastErr = new Error("Hors ligne");
+  } catch (err) {
+    console.warn(`Instantané ${ds.snapshot} indisponible :`, err);
   }
+  const valid = [cached, snapshot].filter((c) => c && Array.isArray(c.data) && c.data.length);
+  return valid.sort((a, b) => b.t - a.t)[0] || null;
+}
 
-  if (cached) return { elements: cached.data, stale: Date.now() - cached.t };
+// Network only: tries each Overpass endpoint in turn, throws if all fail
+async function fetchOverpass(query) {
+  if (navigator.onLine === false) throw new Error("Hors ligne");
+  let lastErr = null;
+  for (const endpoint of OVERPASS_ENDPOINTS) {
+    try {
+      const res = await fetchWithTimeout(endpoint, {
+        method: "POST",
+        body: "data=" + encodeURIComponent(query),
+      }, FETCH_TIMEOUT);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      if (!Array.isArray(json.elements)) throw new Error("Réponse Overpass invalide");
+      return json.elements;
+    } catch (err) {
+      lastErr = err;
+    }
+  }
   throw lastErr;
+}
+
+// Background update. Returns fresh elements, or null when skipped / not better.
+async function refreshFromOSM(ds, local) {
+  if (local && Date.now() - local.t < REFRESH_MIN_AGE) return null;
+  const elements = await fetchOverpass(ds.query);
+  // Guard against truncated/partial responses wiping out good data
+  if (local && elements.length < local.data.length * 0.5) {
+    console.warn(`Réponse Overpass suspecte (${elements.length} vs ${local.data.length}), ignorée`);
+    return null;
+  }
+  writeCache(ds.cacheKey, elements);
+  return elements;
+}
+
+// Order-insensitive fingerprint. Coordinates are left out on purpose: snapshots are
+// rounded, so comparing them gives false positives. A moved-only feature still
+// reaches the user on the next visit, since the fresh data is cached either way.
+function fingerprint(elements) {
+  return elements.map((e) => {
+    const tags = e.geometry ? "" : JSON.stringify(e.tags || {}); // cycling snapshots drop tags
+    return `${e.type}/${e.id}|${tags}|${e.geometry ? e.geometry.length : ""}`;
+  }).sort().join("\n");
+}
+
+function sameElements(a, b) {
+  return !!a && !!b && a.length === b.length && fingerprint(a) === fingerprint(b);
 }
 
 // ── OSM processing ─────────────────────────────────────────────────────────
@@ -195,13 +232,7 @@ function processElement(e) {
   };
 }
 
-async function fetchParkings() {
-  const { elements, stale } = await overpass("osm:parkings:v2", OVERPASS_QUERY);
-  return { parkings: elements.map(processElement).filter(Boolean), stale };
-}
-
-async function fetchCyclingPaths() {
-  const { elements } = await overpass("osm:cycling:v1", CYCLING_QUERY);
+function toCyclingGeoJSON(elements) {
   return {
     type: "FeatureCollection",
     features: elements
@@ -240,41 +271,59 @@ function updateCyclingHighlight(parkingCoords) {
 }
 
 // ── Map icons ──────────────────────────────────────────────────────────────
-const iconColor = { gratuit: "#16a34a", payant: "#ea580c", mixte: "#2563eb", inconnu: "#71717a" };
 const typeLabel = { gratuit: "Gratuit", payant: "Payant", mixte: "Mixte", inconnu: "Inconnu" };
+
+// Teardrop pins in the style of Avant / Après and carte-au: a CSS square rotated
+// -45° with one sharp corner, gradient fill, white border and a white line glyph.
+const PIN_COLORS = {
+  gratuit: ["#4ade80", "#15803d"],
+  mixte:   ["#60a5fa", "#1d4ed8"],
+  payant:  ["#fb923c", "#c2410c"],
+  inconnu: ["#cbd5e1", "#64748b"],
+};
+
+function svgGlyph(paths) {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
+}
+const GLYPH_P = svgGlyph('<path d="M8 20V4h5.5a4.5 4.5 0 0 1 0 9H8"/>');
+const GLYPH_PAID = svgGlyph('<path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>');
 
 // Icons are immutable, so build each (type, variant) once
 const iconCache = new Map();
 
 function getIcon(type, variant = "normal") {
   const key = type + ":" + variant;
-  if (!iconCache.has(key)) {
-    iconCache.set(key, makeIcon(type, { small: variant === "small", dot: variant === "dot" }));
-  }
+  if (!iconCache.has(key)) iconCache.set(key, makeIcon(type, variant));
   return iconCache.get(key);
 }
 
-function makeIcon(type, { small = false, dot = false } = {}) {
-  const c = iconColor[type] || "#888";
+// variant: "normal" | "selected" (bigger, pulsing ring) | "small" (no info) | "dot" (another is selected)
+function makeIcon(type, variant) {
+  const [light, dark] = PIN_COLORS[type] || PIN_COLORS.inconnu;
+  const style = `--pin-light:${light};--pin-dark:${dark}`;
+  const glyph = type === "payant" ? GLYPH_PAID : GLYPH_P;
 
-  if (dot) {
-    const r = 7;
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${r * 2}" height="${r * 2}">
-      <circle cx="${r}" cy="${r}" r="${r - 1.5}" fill="${c}" stroke="white" stroke-width="1.5"/>
-    </svg>`;
-    return L.divIcon({ html: svg, iconSize: [r * 2, r * 2], iconAnchor: [r, r], className: "pin pin-dot" });
+  if (variant === "dot") {
+    const d = 12;
+    return L.divIcon({
+      className: "",
+      html: `<div class="pin-marker dot-marker" style="width:${d}px;height:${d}px"><div class="pin" style="${style}"></div></div>`,
+      iconSize: [d, d],
+      iconAnchor: [d / 2, d / 2],
+      popupAnchor: [0, -d / 2],
+    });
   }
 
-  const w = small ? 18 : 28;
-  const h = small ? 26 : 40;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 40" width="${w}" height="${h}">
-    <path d="M14 0C6.268 0 0 6.268 0 14c0 9.333 14 26 14 26S28 23.333 28 14C28 6.268 21.732 0 14 0z"
-      fill="${c}" stroke="white" stroke-width="1.5"/>
-    <text x="14" y="19" text-anchor="middle" font-size="${small ? 8 : 11}" font-weight="bold" fill="white" font-family="system-ui, sans-serif">P</text>
-  </svg>`;
+  const size = { normal: 30, selected: 36, small: 22 }[variant];
+  // Rotated square: the tip sits ~41/34 of the size below the top edge
+  const anchorY = Math.round((size * 41) / 34);
+  const ring = variant === "selected" ? '<div class="ring"></div>' : "";
   return L.divIcon({
-    html: svg, iconSize: [w, h], iconAnchor: [w / 2, h], popupAnchor: [0, -(h + 2)],
-    className: small ? "pin pin-faded" : "pin",
+    className: "",
+    html: `<div class="pin-marker pin-${variant}" style="width:${size}px;height:${size}px;${style}">${ring}<div class="pin">${glyph}</div></div>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, anchorY],
+    popupAnchor: [0, -Math.round((size * 39) / 34)],
   });
 }
 
@@ -288,7 +337,7 @@ function updateMarkerIcons(selectedId = null) {
     const m = markers[pk.id];
     if (!m) return;
     const variant =
-      pk.id === selectedId ? "normal" :
+      pk.id === selectedId ? "selected" :
       someSelected         ? "dot" :
       isCompletelyUnknown(pk) ? "small" : "normal";
     if (m._variant === variant) return; // skip needless DOM rebuild
@@ -459,13 +508,16 @@ function syncLayoutVars() {
   popupPadBR.y = desktopMQ.matches ? 24 : sheetH + gap + 16;
 }
 
-// flyTo, but centred in the visible area rather than behind a panel
-function flyToVisible(coords, zoom, opts) {
+// Map centre that puts `coords` in the middle of the visible area, not behind a panel
+function visibleCenterFor(coords, zoom) {
   const r = visibleMapRect();
   const size = map.getSize();
   const offset = L.point((r.left + r.right) / 2 - size.x / 2, (r.top + r.bottom) / 2 - size.y / 2);
-  const target = map.unproject(map.project(coords, zoom).subtract(offset), zoom);
-  map.flyTo(target, zoom, opts);
+  return map.unproject(map.project(coords, zoom).subtract(offset), zoom);
+}
+
+function flyToVisible(coords, zoom, opts) {
+  map.flyTo(visibleCenterFor(coords, zoom), zoom, opts);
 }
 
 // ── Render ─────────────────────────────────────────────────────────────────
@@ -613,73 +665,119 @@ function initMap() {
   map.on("click", deselectParking);
 }
 
-async function loadCycling() {
-  try {
-    const geojson = await fetchCyclingPaths();
-    // Canvas renderer: hundreds of polylines restyle much faster than SVG nodes
-    cyclingLayer = L.geoJSON(geojson, {
-      style: STYLE_CYCLING_DEFAULT,
-      renderer: L.canvas({ padding: 0.5 }),
-      interactive: false,
-    }).addTo(map);
-    cyclingLayer.bringToBack();
-    if (selectedParking) updateCyclingHighlight(selectedParking.coords);
-  } catch (err) {
-    console.warn("Pistes cyclables indisponibles :", err);
-  }
+function showCycling(elements) {
+  if (cyclingLayer) map.removeLayer(cyclingLayer);
+  // Canvas renderer: hundreds of polylines restyle much faster than SVG nodes
+  cyclingLayer = L.geoJSON(toCyclingGeoJSON(elements), {
+    style: STYLE_CYCLING_DEFAULT,
+    renderer: L.canvas({ padding: 0.5 }),
+    interactive: false,
+  }).addTo(map);
+  cyclingLayer.bringToBack();
+  if (selectedParking) updateCyclingHighlight(selectedParking.coords);
 }
 
 // Frame all parkings inside the area left visible by the floating panels
+// Clamped to neighbourhood zooms: on a phone, fitting everything into the small
+// visible area would zoom out to the whole island and pile up the markers.
 function fitToParkings() {
   const r = visibleMapRect();
   const size = map.getSize();
-  map.fitBounds(L.latLngBounds(allParkings.map((p) => p.coords)), {
-    paddingTopLeft: [r.left + 24, r.top + 24],
-    paddingBottomRight: [size.x - r.right + 24, size.y - r.bottom + 24],
-    maxZoom: 16,
-    animate: false,
-  });
+  const bounds = L.latLngBounds(allParkings.map((p) => p.coords));
+  const padding = L.point(r.left + size.x - r.right + 48, r.top + size.y - r.bottom + 48);
+  const zoom = Math.min(16, Math.max(14, map.getBoundsZoom(bounds, false, padding)));
+  map.setView(visibleCenterFor(bounds.getCenter(), zoom), zoom, { animate: false });
 }
 
-async function loadParkings() {
-  setStatus("Chargement des stationnements…");
-  const slowTimer = setTimeout(() => setStatus("Le serveur OpenStreetMap est lent, encore un instant…"), 6000);
-  let result;
-  try {
-    result = await fetchParkings();
-  } finally {
-    clearTimeout(slowTimer);
-  }
-  const { parkings, stale } = result;
+function setFreshness(t) {
+  const el = $("#data-freshness");
+  if (!el || !t) return;
+  const date = new Date(t).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" });
+  el.textContent = ` · à jour au ${date}`;
+}
 
+// (Re)build markers and list. Safe to call again when fresher data arrives:
+// the active filter, selection and open popup are preserved.
+function showParkings(elements, t, { initial }) {
+  const parkings = elements.map(processElement).filter(Boolean);
   if (!parkings.length) {
-    showError("Aucun stationnement trouvé", "Le serveur a répondu sans données. Réessayez dans quelques minutes.");
+    if (initial) showError("Aucun stationnement trouvé", "Aucune donnée disponible pour le moment. Réessayez dans quelques minutes.");
     return;
   }
+
+  const selectedId = selectedParking?.id;
+  const popupWasOpen = selectedId && markers[selectedId]?.isPopupOpen();
+  Object.values(markers).forEach((m) => map.removeLayer(m));
+  markers = {};
+  parkingsById.clear();
 
   allParkings = parkings;
   parkings.forEach((p) => {
     parkingsById.set(p.id, p);
     // Popup HTML is built lazily, only when a popup actually opens
     markers[p.id] = L.marker(p.coords, { icon: getIcon(p.type), title: p.nom, riseOnHover: true })
-      .addTo(map)
       .on("click", () => selectParking(p))
       .bindPopup(() => popupHtml(p), {
         closeButton: false, maxWidth: 260,
         autoPanPaddingTopLeft: popupPadTL, autoPanPaddingBottomRight: popupPadBR,
       });
+    markers[p.id]._variant = "normal";
   });
 
   updateFilterCounts();
-  updateMarkerIcons();
-  render("tous");
-  $("#parking-list").setAttribute("aria-busy", "false");
-  document.querySelectorAll(".filter-btn").forEach((b) => (b.disabled = false));
-  $("#geo-btn").disabled = false;
-  fitToParkings();
-  hideOverlay();
+  render(activeFilter); // adds the markers matching the active filter
+  setFreshness(t);
 
-  if (stale) toast(`Données hors ligne (mises à jour il y a ${timeAgo(stale)})`, { duration: 5000 });
+  const reselected = selectedId && parkingsById.get(selectedId);
+  if (reselected) {
+    selectParking(reselected);
+    if (popupWasOpen) markers[selectedId].openPopup();
+  } else {
+    if (selectedId) deselectParking();
+    updateMarkerIcons();
+  }
+
+  if (initial) {
+    $("#parking-list").setAttribute("aria-busy", "false");
+    document.querySelectorAll(".filter-btn").forEach((b) => (b.disabled = false));
+    $("#geo-btn").disabled = false;
+    fitToParkings();
+    hideOverlay();
+    setTimeout(() => $("#map").classList.add("markers-settled"), 800);
+  }
+}
+
+async function initParkings() {
+  setStatus("Chargement des stationnements…");
+  const local = await loadLocal(DATASETS.parkings);
+  if (local) showParkings(local.data, local.t, { initial: true });
+
+  // Nothing local at all: the user has to wait for Overpass
+  const slowTimer = !local && setTimeout(() => setStatus("Le serveur OpenStreetMap est lent, encore un instant…"), 6000);
+  try {
+    const fresh = await refreshFromOSM(DATASETS.parkings, local);
+    if (fresh && !sameElements(fresh, local?.data)) {
+      showParkings(fresh, Date.now(), { initial: !local });
+      if (local) toast("Carte mise à jour avec les dernières données", { tone: "success", duration: 2500 });
+    } else if (fresh) {
+      setFreshness(Date.now());
+    }
+  } catch (err) {
+    // OSM unreachable: keep showing the stored data silently
+    console.warn("Mise à jour OSM impossible, données stockées conservées :", err);
+    if (!local) throw err;
+  } finally {
+    clearTimeout(slowTimer);
+  }
+}
+
+async function initCycling(local) {
+  try {
+    const fresh = await refreshFromOSM(DATASETS.cycling, local);
+    if (fresh && !sameElements(fresh, local?.data)) showCycling(fresh);
+  } catch (err) {
+    console.warn("Pistes cyclables : mise à jour impossible :", err);
+  }
 }
 
 (async () => {
@@ -691,10 +789,13 @@ async function loadParkings() {
   initMap();
   bindUI();
 
-  // Both requests fire simultaneously; cycling paths are optional
-  loadCycling();
+  // Local data shows immediately; Overpass refreshes run one after the other
+  // (parkings first) to stay within Overpass rate limits.
+  const cyclingLocal = loadLocal(DATASETS.cycling)
+    .then((l) => { if (l) showCycling(l.data); return l; })
+    .catch(() => null);
   try {
-    await loadParkings();
+    await initParkings();
   } catch (err) {
     console.error(err);
     const offline = navigator.onLine === false;
@@ -702,7 +803,8 @@ async function loadParkings() {
       offline ? "Vous êtes hors ligne" : "Erreur de chargement",
       offline
         ? "Connectez-vous à Internet pour charger les stationnements."
-        : "Le serveur OpenStreetMap ne répond pas. Réessayez dans quelques instants."
+        : "Les données n'ont pas pu être chargées. Réessayez dans quelques instants."
     );
   }
+  initCycling(await cyclingLocal);
 })();
