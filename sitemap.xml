@@ -3,11 +3,17 @@
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://parking.gabfortin.com/</loc>
-    <lastmod>2026-10-29</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <image:image>
       <image:loc>https://parking.gabfortin.com/img/og.jpg</image:loc>
     </image:image>
+  </url>
+  <url>
+    <loc>https://parking.gabfortin.com/confidentialite.html</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.2</priority>
   </url>
 </urlset>

@@ -78,15 +78,17 @@ function showError(title, detail) {
   overlay.hidden = false;
   overlay.classList.add("is-error");
   overlay.innerHTML = `
-    <div class="overlay-card">
-      <div class="overlay-icon">⚠️</div>
+    <div class="overlay-card" role="alert">
+      <div class="overlay-icon" aria-hidden="true">⚠️</div>
       <p class="overlay-title">${esc(title)}</p>
       <p class="overlay-detail">${esc(detail)}</p>
-      <button class="btn-primary" id="retry-btn" type="button">Réessayer</button>
+      <button class="gf-btn" id="retry-btn" type="button">Réessayer</button>
     </div>`;
   $("#retry-btn").addEventListener("click", () => location.reload());
   $("#parking-list").innerHTML = "";
-  $("#count-badge").textContent = "—";
+  $("#parking-list").setAttribute("aria-busy", "false");
+  $("#count-badge").textContent = "";
+  $("#list-status").textContent = title;
 }
 
 function hideOverlay() {
@@ -364,14 +366,18 @@ function makeCircleLabel(emoji, text, color) {
 }
 
 function popupHtml(p) {
+  const row = (k, v) => `<div class="gf-pop-row"><span class="k">${k}</span><span class="v">${v}</span></div>`;
   return `
-    <div class="popup-name">${esc(p.nom)}</div>
-    <span class="popup-badge ${p.type}">${typeLabel[p.type]}</span>
-    ${p.adresse ? `<div class="popup-address">📍 ${esc(p.adresse)}</div>` : ""}
-    ${p.tarif ? `<div><strong>${esc(p.tarif)}</strong></div>` : ""}
-    ${p.heures ? `<div>🕐 ${esc(p.heures)}</div>` : ""}
-    ${p.places ? `<div>🚗 ${p.places} places</div>` : ""}
-    <a class="popup-dir" href="https://www.google.com/maps/dir/?api=1&destination=${p.coords[0]},${p.coords[1]}" target="_blank" rel="noopener">Itinéraire →</a>`;
+    <div class="gf-pop" tabindex="-1">
+      <span class="gf-pop-eyebrow ${p.type}">${typeLabel[p.type]}</span>
+      <h2 class="gf-pop-name">${esc(p.nom)}</h2>
+      ${p.adresse ? row("Adresse", esc(p.adresse)) : ""}
+      ${p.parkingType ? row("Type", p.parkingType) : ""}
+      ${p.tarif && p.type === "payant" && p.tarif !== "Payant" ? row("Tarif", esc(p.tarif)) : ""}
+      ${p.heures ? row("Heures", esc(p.heures)) : ""}
+      ${p.places ? row("Places", p.places) : ""}
+      <a class="gf-btn" href="https://www.google.com/maps/dir/?api=1&destination=${p.coords[0]},${p.coords[1]}" target="_blank" rel="noopener">Itinéraire (Google Maps) →</a>
+    </div>`;
 }
 
 function selectParking(p) {
@@ -476,36 +482,38 @@ function onGeoClick() {
   );
 }
 
-// ── Floating panels vs. map ────────────────────────────────────────────────
-const desktopMQ = window.matchMedia("(min-width: 900px)");
+// ── Panneaux flottants vs carte ────────────────────────────────────────────
+// Même seuil que le CSS (MAP-DESIGN-SYSTEM.md) : panneau latéral à partir de 761 px
+const desktopMQ = window.matchMedia("(min-width: 761px)");
 
 // Popup auto-pan padding, mutated in place so every popup sees current values
 const popupPadTL = { x: 24, y: 24 };
 const popupPadBR = { x: 24, y: 24 };
 
-// The part of the map not covered by the top bar and the list panel
+// Desktop: sidebar shown unless collapsed. Mobile: it is an overlay, never in the way once closed.
+function sidebarDocked() {
+  return desktopMQ.matches && !document.body.classList.contains("gf-sidebar-collapsed");
+}
+
+// The part of the map not covered by the header and the sidebar.
+// Computed from the target layout, not from mid-transition rects.
 function visibleMapRect() {
-  const top = $(".topbar").getBoundingClientRect();
-  const sheet = $(".sheet").getBoundingClientRect();
+  const header = $(".gf-header");
+  const gap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--gap")) || 16;
   const W = window.innerWidth, H = window.innerHeight;
-  if (desktopMQ.matches) return { left: Math.max(top.right, sheet.right), top: 0, right: W, bottom: H };
-  return { left: 0, top: top.bottom, right: W, bottom: Math.min(sheet.top, H) };
+  const top = header.getBoundingClientRect().top + header.offsetHeight;
+  const left = sidebarDocked() ? gap + $("#gfSidebar").offsetWidth : 0;
+  return { left, top, right: W, bottom: H };
 }
 
 function syncLayoutVars() {
-  const root = document.documentElement.style;
-  root.setProperty("--topbar-h", $(".topbar").offsetHeight + "px");
-  const collapsed = document.body.classList.contains("map-focus");
-  const sheetH = collapsed ? $(".sheet-handle").offsetHeight : $(".sheet").offsetHeight;
-  root.setProperty("--sheet-visible-h", desktopMQ.matches ? "0px" : sheetH + "px");
-
-  // Use the target layout (not mid-transition rects) for popup padding
-  const gap = desktopMQ.matches ? 16 : 12;
-  const topbarBottom = $(".topbar").offsetHeight + gap;
-  popupPadTL.x = desktopMQ.matches ? $(".topbar").offsetWidth + gap * 2 : 16;
-  popupPadTL.y = desktopMQ.matches ? 24 : topbarBottom + 16;
+  const header = $(".gf-header");
+  document.documentElement.style.setProperty("--gf-header-h", header.offsetHeight + "px");
+  const r = visibleMapRect();
+  popupPadTL.x = r.left + 16;
+  popupPadTL.y = r.top + 16;
   popupPadBR.x = 24;
-  popupPadBR.y = desktopMQ.matches ? 24 : sheetH + gap + 16;
+  popupPadBR.y = desktopMQ.matches ? 24 : $(".watermark").offsetHeight + 24; // badge de crédits en bas
 }
 
 // Map centre that puts `coords` in the middle of the visible area, not behind a panel
@@ -530,7 +538,7 @@ function highlightCard(id) {
   const card = document.querySelector(`.card[data-id="${CSS.escape(id)}"]`);
   if (!card) return;
   card.classList.add("active");
-  if (!document.body.classList.contains("map-focus")) {
+  if (sidebarDocked() || $("#gfSidebar").classList.contains("open")) {
     card.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }
 }
@@ -556,8 +564,9 @@ function render(filter) {
   }));
   if (userCoords) items.sort((a, b) => a.dist - b.dist);
 
-  $("#count-badge").textContent =
-    filtered.length + " stationnement" + (filtered.length > 1 ? "s" : "");
+  const countText = filtered.length + " stationnement" + (filtered.length > 1 ? "s" : "");
+  $("#count-badge").textContent = "· " + filtered.length;
+  $("#list-status").textContent = countText + (userCoords ? ", triés par distance" : "");
 
   // Show/hide markers
   allParkings.forEach((p) => {
@@ -572,30 +581,31 @@ function render(filter) {
 
   if (items.length === 0) {
     list.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">🅿️</div>
+      <li class="empty-state">
+        <span class="empty-icon" aria-hidden="true">🅿️</span>
         <p>Aucun stationnement dans cette catégorie.</p>
-        <button class="btn-ghost" type="button" data-reset-filter>Voir tous les stationnements</button>
-      </div>`;
+        <button class="gf-btn gf-btn-ghost" type="button" data-reset-filter>Voir tous les stationnements</button>
+      </li>`;
     return;
   }
 
+  // Real <button>s (ACCESSIBILITE.md): only phrasing content inside, hence <span>s
   list.innerHTML = items.map(({ p, dist }) => `
-    <article class="card ${p.type}${selectedParking?.id === p.id ? " active" : ""}" data-id="${esc(p.id)}" tabindex="0" role="button" aria-label="${esc(p.nom)}">
-      <div class="card-top">
-        <h3 class="card-name">${esc(p.nom)}</h3>
-        ${dist !== null ? `<span class="distance-badge">${formatDist(dist)}</span>` : ""}
-      </div>
-      ${p.adresse ? `<div class="card-address">${esc(p.adresse)}</div>` : ""}
-      <div class="card-meta">
+    <li><button type="button" class="card ${p.type}${selectedParking?.id === p.id ? " active" : ""}" data-id="${esc(p.id)}">
+      <span class="card-top">
+        <span class="card-name">${esc(p.nom)}</span>
+        ${dist !== null ? `<span class="distance-badge"><span class="sr-only">à </span>${formatDist(dist)}</span>` : ""}
+      </span>
+      ${p.adresse ? `<span class="card-address">${esc(p.adresse)}</span>` : ""}
+      <span class="card-meta">
         <span class="badge ${p.type}">${typeLabel[p.type]}</span>
         ${p.parkingType ? `<span class="badge neutral">${p.parkingType}</span>` : ""}
-        ${p.tarif && p.type === "payant" ? `<span class="meta-item">💰 ${esc(p.tarif)}</span>` : ""}
-        ${p.heures ? `<span class="meta-item">🕐 ${esc(p.heures)}</span>` : ""}
-        ${p.places ? `<span class="meta-item">🚗 ${p.places} places</span>` : ""}
-      </div>
-      ${p.notes ? `<div class="card-notes">${esc(p.notes)}</div>` : ""}
-    </article>`).join("");
+        ${p.tarif && p.type === "payant" ? `<span class="meta-item"><span aria-hidden="true">💰</span> ${esc(p.tarif)}</span>` : ""}
+        ${p.heures ? `<span class="meta-item"><span aria-hidden="true">🕐</span> ${esc(p.heures)}</span>` : ""}
+        ${p.places ? `<span class="meta-item"><span aria-hidden="true">🚗</span> ${p.places} places</span>` : ""}
+      </span>
+      ${p.notes ? `<span class="card-notes">${esc(p.notes)}</span>` : ""}
+    </button></li>`).join("");
 }
 
 function setFilter(filter) {
@@ -611,12 +621,84 @@ function setFilter(filter) {
 function activateCard(card) {
   const p = parkingsById.get(card.dataset.id);
   if (!p) return;
+  // On a phone the sidebar covers the map: close it first, so the flight is visible
+  if (!desktopMQ.matches) setSidebarOpenMobile(false);
   map.closePopup();
+  popupOpener = usingKeyboard ? card : null;
   flyToVisible(p.coords, 17, { duration: 0.6 });
   // Open after the flight so auto-pan doesn't fight the animation
   map.once("moveend", () => markers[p.id]?.openPopup());
   selectParking(p);
 }
+
+// ── Panneau latéral (MAP-DESIGN-SYSTEM.md) ─────────────────────────────────
+// Ouvert par défaut sur ordinateur, fermé sur téléphone.
+function setSidebarOpenMobile(open) {
+  $("#gfSidebar").classList.toggle("open", open);
+  $("#gfSidebarScrim").classList.toggle("open", open);
+  $("#gfSidebarToggle").setAttribute("aria-expanded", String(open));
+}
+
+function toggleSidebar() {
+  if (desktopMQ.matches) {
+    const collapsed = document.body.classList.toggle("gf-sidebar-collapsed");
+    $("#gfSidebarToggle").setAttribute("aria-expanded", String(!collapsed));
+    syncLayoutVars();
+  } else {
+    const open = !$("#gfSidebar").classList.contains("open");
+    setSidebarOpenMobile(open);
+    if (open) $("#gfSidebar").focus({ preventScroll: true });
+  }
+}
+
+function syncSidebarState() {
+  const expanded = desktopMQ.matches
+    ? !document.body.classList.contains("gf-sidebar-collapsed")
+    : $("#gfSidebar").classList.contains("open");
+  $("#gfSidebarToggle").setAttribute("aria-expanded", String(expanded));
+  syncLayoutVars();
+}
+
+// ── Modale « À propos » ────────────────────────────────────────────────────
+function bindInfoModal() {
+  const btn = $("#gfInfoBtn");
+  const overlay = $("#gfInfoOverlay");
+  const isOpen = () => overlay.classList.contains("open");
+  function openInfo() {
+    overlay.classList.add("open");
+    $("#gfInfoClose").focus();
+  }
+  function closeInfo() {
+    if (!isOpen()) return;
+    overlay.classList.remove("open");
+    btn.focus();
+  }
+  btn.addEventListener("click", openInfo);
+  $("#gfInfoClose").addEventListener("click", closeInfo);
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) closeInfo(); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      if (isOpen()) return closeInfo();
+      if ($("#gfSidebar").classList.contains("open")) {
+        setSidebarOpenMobile(false);
+        $("#gfSidebarToggle").focus();
+      }
+    }
+    // Keep Tab inside the dialog while it is open
+    if (e.key === "Tab" && isOpen()) {
+      const focusables = [...overlay.querySelectorAll("a[href], button, summary")].filter((el) => el.offsetParent !== null);
+      const first = focusables[0], last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  });
+}
+
+// ── Focus des popups au clavier (ACCESSIBILITE.md) ─────────────────────────
+let usingKeyboard = false;
+let popupOpener = null; // element to give focus back to when the popup closes
+document.addEventListener("keydown", (e) => { if (e.key === "Tab" || e.key === "Enter" || e.key === " ") usingKeyboard = true; }, true);
+document.addEventListener("pointerdown", () => { usingKeyboard = false; }, true);
 
 // ── Init ───────────────────────────────────────────────────────────────────
 function bindUI() {
@@ -626,13 +708,6 @@ function bindUI() {
     const card = e.target.closest(".card");
     if (card) activateCard(card);
   });
-  $("#parking-list").addEventListener("keydown", (e) => {
-    if (e.key !== "Enter" && e.key !== " ") return;
-    const card = e.target.closest(".card");
-    if (!card) return;
-    e.preventDefault();
-    activateCard(card);
-  });
 
   document.querySelectorAll(".filter-btn").forEach((btn) => {
     btn.addEventListener("click", () => setFilter(btn.dataset.filter));
@@ -640,15 +715,14 @@ function bindUI() {
 
   $("#geo-btn").addEventListener("click", onGeoClick);
 
-  $("#list-toggle").addEventListener("click", () => {
-    const collapsed = document.body.classList.toggle("map-focus");
-    $("#list-toggle").setAttribute("aria-expanded", String(!collapsed));
-    syncLayoutVars();
-  });
+  $("#gfSidebarToggle").addEventListener("click", toggleSidebar);
+  $("#gfSidebarScrim").addEventListener("click", () => setSidebarOpenMobile(false));
+  desktopMQ.addEventListener("change", syncSidebarState);
+  bindInfoModal();
 
-  new ResizeObserver(syncLayoutVars).observe($(".topbar"));
+  new ResizeObserver(syncLayoutVars).observe($(".gf-header"));
   window.addEventListener("resize", syncLayoutVars);
-  syncLayoutVars();
+  syncSidebarState();
 
   window.addEventListener("offline", () => toast("Vous êtes hors ligne — données en cache affichées.", { tone: "error" }));
   window.addEventListener("online", () => toast("Connexion rétablie", { tone: "success", duration: 2000 }));
@@ -663,6 +737,18 @@ function initMap() {
     maxZoom: 19,
   }).addTo(map);
   map.on("click", deselectParking);
+
+  // Keyboard users land inside the popup, and go back where they were when it closes
+  map.on("popupopen", (e) => {
+    if (!usingKeyboard) return;
+    if (!popupOpener) popupOpener = document.activeElement;
+    e.popup.getElement()?.querySelector(".gf-pop")?.focus({ preventScroll: true });
+  });
+  map.on("popupclose", () => {
+    const opener = popupOpener;
+    popupOpener = null;
+    if (usingKeyboard && opener && document.contains(opener)) opener.focus({ preventScroll: true });
+  });
 }
 
 function showCycling(elements) {
@@ -690,10 +776,12 @@ function fitToParkings() {
 }
 
 function setFreshness(t) {
-  const el = $("#data-freshness");
-  if (!el || !t) return;
+  if (!t) return;
   const date = new Date(t).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" });
-  el.textContent = ` · à jour au ${date}`;
+  const el = $("#data-freshness");
+  if (el) el.textContent = ` · à jour au ${date}`;
+  const info = $("#data-freshness-info");
+  if (info) info.textContent = ` (dernière mise à jour : ${date})`;
 }
 
 // (Re)build markers and list. Safe to call again when fresher data arrives:

@@ -6,13 +6,16 @@ Carte interactive des stationnements hors rue publics du Plateau-Mont-Royal, à 
 
 ## Fonctionnalités
 
-- Carte plein écran avec panneaux translucides (feuille coulissante sur mobile, colonne latérale sur desktop) et mode sombre automatique
-- Marqueurs en goutte colorés par tarif, dans le style des cartes [Avant / Après](https://avant-apres.ca) et [carte-au](https://carte-au.gabfortin.com)
+- Carte plein écran au [système de design des cartes](../MAP-DESIGN-SYSTEM.md) (dialecte `gf-`) : bandeau en verre, panneau latéral repliable (bouton burger, panneau en surimpression sur téléphone), bouton « i » et modale « À propos », badge de crédits en bas à gauche
+- Mode sombre automatique (suit l'appareil), aux couleurs du « dashboard verre »
+- Marqueurs en goutte colorés par tarif, dans le style des cartes [Avant / Après](https://avant-apres.ca) et [carte-au](https://carte-au.gabfortin.com) ; le pictogramme ($ ou P) double la couleur
 - Filtres : Gratuit · Mixte · Payant · Inconnu, avec le nombre de stationnements par catégorie
 - Tri par distance avec géolocalisation
 - Infos par stationnement : adresse, tarif, heures, nombre de places, lien d'itinéraire
 - Au clic sur un stationnement : rayons de 15 min à pied (1 km) et 10 min à vélo (2,5 km), pistes cyclables à proximité mises en évidence
-- Section À propos / FAQ, données structurées (JSON-LD), `llms.txt`, `sitemap.xml` et manifest pour l'installation sur téléphone
+- Accessibilité : liens d'évitement, vrais boutons, focus gardé dans la modale et déplacé dans les popups au clavier, mouvement réduit
+- Signature « Développé par Gabriel Fortin », [politique de confidentialité](confidentialite.html), mesure d'audience GoatCounter (sans cookie)
+- FAQ dans la modale, données structurées (JSON-LD), `llms.txt`, `sitemap.xml` et manifest pour l'installation sur téléphone
 
 ## Données
 
@@ -33,10 +36,10 @@ Les données proviennent d'OpenStreetMap et sont de qualité variable. À valide
 Requiert un serveur local (le chargement des données ne fonctionne pas via `file://`) :
 
 ```bash
-python3 -m http.server 8765
+python3 -m http.server 8001
 ```
 
-Puis ouvrir [http://localhost:8765](http://localhost:8765).
+Puis ouvrir [http://localhost:8001](http://localhost:8001).
 
 ## Déploiement
 
@@ -56,20 +59,25 @@ Pour que la GitHub Action puisse commiter l'instantané : *Settings → Actions 
 
 | Fichier | Rôle |
 |---|---|
-| `index.html` | Page, métadonnées SEO, JSON-LD, FAQ |
+| `index.html` | Page, métadonnées SEO, JSON-LD, FAQ (dans la modale « À propos ») |
+| `confidentialite.html` | Politique de confidentialité (Loi 25), même style que la carte |
 | `app.js` | Carte, chargement des données, filtres, géolocalisation |
-| `style.css` | Design (panneaux translucides, pins, mode sombre) |
+| `style.css` | Design : jetons et composants `gf-` du système de cartes, pins, mode sombre |
 | `data/` | Instantané OSM (stationnements, pistes cyclables) |
 | `vendor/leaflet-1.9.4/` | Leaflet hébergé localement, pour ne dépendre d'aucun CDN |
+| `fonts/` | Inter et Poppins hébergées localement (licences OFL incluses), au lieu de Google Fonts |
 | `scripts/update_osm_data.py` | Rafraîchit l'instantané depuis Overpass |
 | `scripts/stamp_assets.py` | Versionne `style.css` et `app.js` dans `index.html` |
 | `img/` | Icônes, avatar, image de partage (`og.jpg`) |
+| `NOTES.md` | Décisions de la mise aux normes de design (novembre 2026) |
 | `llms.txt`, `robots.txt`, `sitemap.xml`, `manifest.webmanifest` | Référencement et installation |
 
 ## Technologies
 
 - [Leaflet](https://leafletjs.com) 1.9.4, hébergé dans `vendor/`
 - [OpenStreetMap](https://www.openstreetmap.org) : tuiles de carte et données, via l'[API Overpass](https://overpass-api.de)
+- Polices [Inter](https://rsms.me/inter/) et [Poppins](https://github.com/itfoundry/Poppins), hébergées dans `fonts/`
+- [GoatCounter](https://www.goatcounter.com) : mesure d'audience anonyme, sans cookie
 - HTML, CSS et JavaScript sans framework ni étape de build
 
 ## Auteur

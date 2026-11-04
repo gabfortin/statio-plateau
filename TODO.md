@@ -1,9 +1,9 @@
 # TODO — Statio Plateau
 
-## 1. Lien vers gabfortin.com (en haut à droite) ✅
+## 1. Lien vers gabfortin.com ✅
 - [x] Photo de profil dans `img/avatar.jpg` (112 px, 4 Ko)
-- [x] Avatar rond cliquable vers `https://gabfortin.com` dans la barre du haut
-- [x] Carte « Conçu par » dans la section À propos, avec titre d'élu et liens vers les profils
+- [x] Avatar rond cliquable vers `https://gabfortin.com` dans le badge de crédits en bas à gauche (norme des cartes, nov. 2026 ; avant : dans la barre du haut)
+- [x] Fiche « Conçu par » dans la modale « À propos », avec titre d'élu et liens vers les profils
 
 ---
 
@@ -51,3 +51,12 @@
 
 ## 6. Mention « en développement » ✅
 - [x] Pastille « Bêta » à côté du sous-titre (remplace l'ancienne bannière jaune fixe)
+
+---
+
+## 7. Mise aux normes de design (novembre 2026) ✅
+- [x] Bandeau, panneau latéral, bouton « i » + modale, badge de crédits, popups : composants `gf-` de MAP-DESIGN-SYSTEM.md
+- [x] Mode sombre aux couleurs du dashboard verre
+- [x] Signature + page de confidentialité + GoatCounter
+- [x] Accessibilité (ACCESSIBILITE.md) : liens d'évitement, vrais boutons, focus de la modale et des popups
+- Détails et écarts assumés : voir `NOTES.md`
