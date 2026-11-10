@@ -1,4 +1,4 @@
-# TODO — Statio Plateau
+# À faire — Statio Plateau
 
 ## 1. Lien vers gabfortin.com ✅
 - [x] Photo de profil dans `img/avatar.jpg` (112 px, 4 Ko)
