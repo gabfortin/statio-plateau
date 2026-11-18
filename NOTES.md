@@ -55,3 +55,13 @@ Captures Playwright à 375 px et à 1280 px, en clair et en sombre
 (carte, panneau ouvert, stationnement sélectionné, panneau replié, modale).
 Console sans erreur, sauf les 502/504 d'Overpass, attendus quand l'API est
 surchargée (déjà gérés sans bruit par l'appli).
+
+## Fond de carte MapLibre (17 novembre 2026)
+
+Leaflet et les tuiles tile.openstreetmap.org (« 403 Access blocked » par
+moments) sont remplacés par le composant de carte commun `vendor/carte/`
+(modèle `~/Developer/outils/communs/carte/`) : même API (`L.map`, `L.marker`,
+`L.geoJSON`…), dessinée par MapLibre GL sur le fond vectoriel OpenFreeMap
+(Positron, Dark en mode sombre). Le filtre CSS des tuiles (`--tile-filter`)
+ne sert plus : le style sombre remplace l'inversion. `stamp_assets.py`
+estampille aussi `vendor/carte/carte.js` et `carte.css`.

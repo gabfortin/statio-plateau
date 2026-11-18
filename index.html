@@ -58,8 +58,9 @@
   <!-- Bundled data snapshot: fetched in parallel with the scripts -->
   <link rel="preload" href="data/parkings.json" as="fetch" crossorigin />
   <!-- Leaflet is self-hosted so the map never depends on a third-party CDN -->
-  <link rel="stylesheet" href="vendor/leaflet-1.9.4/leaflet.css" />
-  <link rel="stylesheet" href="style.css?v=c0b65e9302" />
+  <link rel="stylesheet" href="vendor/carte/maplibre-gl.css" />
+  <link rel="stylesheet" href="vendor/carte/carte.css?v=9cd4843111" />
+  <link rel="stylesheet" href="style.css?v=03e3028d5d" />
 
   <script type="application/ld+json">
   {
@@ -305,7 +306,8 @@
 
   <noscript><p class="noscript">Cette application requiert JavaScript.</p></noscript>
 
-  <script src="vendor/leaflet-1.9.4/leaflet.js" defer></script>
-  <script src="app.js?v=96ae9e4ff0" defer></script>
+  <script src="vendor/carte/maplibre-gl.js" defer></script>
+  <script src="vendor/carte/carte.js?v=9c713a6978" defer></script>
+  <script src="app.js?v=aa19901c74" defer></script>
 </body>
 </html>

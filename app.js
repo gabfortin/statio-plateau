@@ -731,11 +731,7 @@ function bindUI() {
 function initMap() {
   map = L.map("map", { zoomControl: false }).setView(PLATEAU_CENTER, 14);
   L.control.zoom({ position: "bottomright" }).addTo(map);
-  // CARTO basemaps now require an API key; OSM tiles are desaturated in CSS instead
-  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    maxZoom: 19,
-  }).addTo(map);
+  // Base map: OpenFreeMap (OpenStreetMap data, Positron or Dark style), added by vendor/carte/ with its credit
   map.on("click", deselectParking);
 
   // Keyboard users land inside the popup, and go back where they were when it closes

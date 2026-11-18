@@ -69,7 +69,7 @@ Un serveur est nécessaire : le chargement des données ne fonctionne pas en `fi
 | `app.js` | Carte, chargement des données, filtres, géolocalisation |
 | `style.css` | Jetons et composants `gf-` du système de cartes, marqueurs, mode sombre |
 | `data/` | Instantané OSM (stationnements, pistes cyclables) |
-| `vendor/leaflet-1.9.4/` | Leaflet hébergé dans le dépôt, sans CDN |
+| `vendor/carte/` | Composant de carte commun (modèle `~/Developer/outils/communs/carte/`) : API de Leaflet dessinée par MapLibre, fond OpenFreeMap |
 | `fonts/` | Inter et Poppins hébergées dans le dépôt (licences OFL incluses) |
 | `scripts/update_osm_data.py` | Rafraîchit l'instantané depuis Overpass |
 | `scripts/stamp_assets.py` | Écrit les empreintes `?v=` de `style.css` et `app.js` dans `index.html` |
@@ -103,7 +103,7 @@ Aucun cookie ni compte.
 |---|---|---|
 | Chaque visite | Page, site d'origine, appareil, pays | GoatCounter (mesure d'audience anonyme) |
 | Chaque visite | Requête de mise à jour des données | API Overpass (overpass-api.de, ou overpass.kumi.systems en secours) |
-| Carte | Requêtes de tuiles de la zone affichée | OpenStreetMap |
+| Carte | Fond de carte de la zone affichée | OpenFreeMap |
 | Tri par distance | Rien : la position reste dans le navigateur | — |
 | Clic sur « Itinéraire » | Coordonnées du stationnement choisi (pas la position de la personne) | Google Maps |
 
@@ -112,9 +112,9 @@ sa date) si un service externe est ajouté.
 
 ## Crédits
 
-- [Leaflet](https://leafletjs.com) 1.9.4 (BSD-2-Clause), hébergé dans `vendor/`
+- [MapLibre GL JS](https://maplibre.org) (BSD-3-Clause), hébergé dans `vendor/carte/` ; fond [OpenFreeMap](https://openfreemap.org), © [OpenMapTiles](https://www.openmaptiles.org)
 - Polices [Inter](https://rsms.me/inter/) et [Poppins](https://github.com/itfoundry/Poppins) (SIL OFL 1.1), hébergées dans `fonts/`
-- Données et fond de carte © les contributeurs d'[OpenStreetMap](https://www.openstreetmap.org/copyright) (ODbL)
+- Données (et celles du fond de carte) © les contributeurs d'[OpenStreetMap](https://www.openstreetmap.org/copyright) (ODbL)
 
 ## Auteur
 
