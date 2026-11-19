@@ -13,7 +13,7 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-ASSETS = ["style.css", "app.js", "vendor/carte/carte.css", "vendor/carte/carte.js"]   # carte.js : composant de carte commun
+ASSETS = ["style.css", "app.js", "vendor/carte/carte.css", "vendor/carte/carte.js", "vendor/don.js"]   # carte.js : composant de carte commun ; don.js : bouton « Faire un don » commun
 
 
 def main():
