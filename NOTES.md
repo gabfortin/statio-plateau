@@ -15,7 +15,7 @@ d'accent). Elle suit maintenant le système commun des cartes
 | Section « À propos / FAQ » au bas de la liste | Modale `.gf-info-overlay` (texte, données, FAQ, fiche de l'auteur, lien Confidentialité) | Patron canonique du bouton « i » |
 | Avatar en haut à droite | Badge de crédits `.watermark` en bas à gauche (« Développé par Gabriel Fortin · Confidentialité ») | SIGNATURE-ET-CONFIDENTIALITE.md |
 | Police système | Inter + Poppins, hébergées dans `fonts/` | Norme ; hébergées localement plutôt que Google Fonts, dans l'esprit de `vendor/` (aucun CDN) et pour garder la page de confidentialité courte |
-| Accent bleu `#2563eb` | Marque indigo `--brand: #4f46e5` (même dégradé que `img/icon.svg`) | Le bleu, le vert et l'orange restent réservés aux catégories (mixte, gratuit, payant) |
+| Accent bleu `#2563eb` | Marque indigo `--brand: #4f46e5` (couleur de la voiture de `img/icon.svg`, tirée de la scène d'attente ; outils/icones/icones_statio.py) | Le bleu, le vert et l'orange restent réservés aux catégories (mixte, gratuit, payant) |
 | Fiches `<article role="button">` | `<li><button>` | ACCESSIBILITE.md : vrais boutons |
 | Pas de GoatCounter ni de confidentialité | GoatCounter dans les deux pages + `confidentialite.html` | Règle 3 du CLAUDE.md commun |
 
