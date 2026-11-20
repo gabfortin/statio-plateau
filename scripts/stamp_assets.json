@@ -1,0 +1,13 @@
+{
+  "page": "index.html",
+  "fichiers": [
+    "style.css",
+    "app.js",
+    "vendor/carte/carte.css",
+    "vendor/carte/carte.js",
+    "vendor/don.js",
+    "vendor/chargement.css",
+    "chargement-scenes.css",
+    "vendor/chargement.js"
+  ]
+}

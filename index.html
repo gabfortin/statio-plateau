@@ -61,6 +61,8 @@
   <link rel="stylesheet" href="vendor/carte/maplibre-gl.css" />
   <link rel="stylesheet" href="vendor/carte/carte.css?v=9cd4843111" />
   <link rel="stylesheet" href="style.css?v=03e3028d5d" />
+  <link rel="stylesheet" href="vendor/chargement.css?v=fbc241999d" />
+  <link rel="stylesheet" href="chargement-scenes.css?v=e2be541551" />
 
   <script type="application/ld+json">
   {
@@ -183,9 +185,16 @@
 
   <div id="map" role="region" aria-label="Carte des stationnements" tabindex="0">
     <div id="map-overlay">
-      <div class="overlay-card">
-        <div class="loader" aria-hidden="true"><span></span><span></span><span></span></div>
-        <p id="loading-status" aria-live="polite">Initialisation de la carte…</p>
+      <!-- Attente : base commune vendor/chargement.css, scène chargement-scenes.css (ch-places) -->
+      <div class="ch ch-dans ch-places" role="status" aria-live="polite">
+        <div class="ch-carte">
+          <div class="ch-scene" aria-hidden="true"><span class="s-sol"></span><span class="s-rangee s-r1"></span><span class="s-rangee s-r2"></span><span class="s-libre s-l1"></span><span class="s-libre s-l2"></span><span class="s-libre s-l3"></span><span class="s-voiture"></span><span class="s-p">P</span></div>
+          <div class="ch-texte">
+            <p class="ch-titre" id="loading-status">Initialisation de la carte…</p>
+            <p class="ch-detail">Stationnements hors rue du Plateau-Mont-Royal</p>
+            <span class="ch-barre" aria-hidden="true"><i></i></span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -212,7 +221,7 @@
         <path d="M12 11v6.2" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/>
       </svg>
     </button>
-    <script src="vendor/don.js?v=bbb78926b2"></script>
+    <script src="vendor/don.js?v=f994e04af6"></script>
   </header>
 
   <div class="gf-info-overlay" id="gfInfoOverlay" role="dialog" aria-modal="true" aria-labelledby="gfInfoTitle">
@@ -309,6 +318,7 @@
 
   <script src="vendor/carte/maplibre-gl.js" defer></script>
   <script src="vendor/carte/carte.js?v=9c713a6978" defer></script>
-  <script src="app.js?v=aa19901c74" defer></script>
+  <script src="vendor/chargement.js?v=981da60f06" defer></script>
+  <script src="app.js?v=a9325de106" defer></script>
 </body>
 </html>

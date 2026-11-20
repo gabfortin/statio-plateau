@@ -440,6 +440,10 @@ function setGeoActive(coords) {
   render(activeFilter);
 }
 
+const SCENE_GPS = '<span class="g-rues"></span><span class="g-onde"></span><span class="g-onde g-onde-2"></span>' +
+  '<span class="g-onde g-onde-3"></span><span class="g-p g-p1">P</span><span class="g-p g-p2">P</span>' +
+  '<span class="g-p g-p3">P</span><span class="g-p g-p4">P</span><span class="g-moi"></span>';
+
 function onGeoClick() {
   const btn = $("#geo-btn");
   if (btn.classList.contains("busy")) return; // request already in flight
@@ -454,8 +458,15 @@ function onGeoClick() {
 
   btn.classList.add("busy");
   btn.disabled = true;
+  // Attente (base commune vendor/chargement.js, scène ch-gps de chargement-scenes.css) :
+  // le point de position émet des ondes, les stationnements s'allument du plus proche au plus loin.
+  const attente = window.Chargement && Chargement.creer({
+    scene: SCENE_GPS, classe: "ch-gps", mode: "flottant",
+    titre: "Recherche de votre position…", detail: "Puis tri des stationnements par distance",
+  });
   navigator.geolocation.getCurrentPosition(
     (pos) => {
+      if (attente) attente.fermer();
       btn.classList.remove("busy");
       btn.disabled = false;
       const coords = [pos.coords.latitude, pos.coords.longitude];
@@ -469,6 +480,7 @@ function onGeoClick() {
       }
     },
     (err) => {
+      if (attente) attente.fermer();
       btn.classList.remove("busy");
       btn.disabled = false;
       const msg = {

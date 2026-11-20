@@ -1,0 +1,68 @@
+/* ── Scènes d’attente de statio-plateau (base : vendor/chargement.css, modèle outils/communs/) ──
+   ch-places : chargement des stationnements ; ch-gps : « Trier par distance ». */
+.ch-places, .ch-gps { --ch-rgb: 79, 70, 229; --ch-clair: #a5b4fc; }
+/* Stationnement :    Vue du ciel : rangées de cases, une voiture tourne, cherche et se gare ;
+   les cases libres s'allument en vert ; le panneau « P » clignote. */
+.ch-places .ch-scene { border-radius: 28px; }
+.s-sol { inset: 0; background: rgba(var(--ch-rgb), .08); }
+.s-rangee {
+  left: 8%; right: 8%; height: 24%;
+  background: repeating-linear-gradient(90deg, rgba(var(--ch-rgb), .55) 0 2px, transparent 2px 20%);
+  border-top: 2px solid rgba(var(--ch-rgb), .55);
+}
+.s-r1 { top: 10%; } .s-r2 { bottom: 10%; transform: scaleY(-1); }
+.s-libre { width: 14%; height: 20%; border-radius: 4px; background: var(--ch-clair); box-shadow: 0 0 12px rgba(var(--ch-rgb), .9); opacity: 0; animation: s-libre 2.8s ease-out infinite; }
+.s-l1 { top: 12%; left: 30%; } .s-l2 { top: 12%; left: 70%; animation-delay: .7s; } .s-l3 { bottom: 12%; left: 50%; animation-delay: 1.4s; }
+.s-voiture {
+  left: 50%; top: 50%; width: 15%; height: 24%; margin: -12% 0 0 -7.5%;
+  border-radius: 6px 6px 4px 4px; background: var(--ch-accent);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, .25);
+  animation: s-roule 2.8s cubic-bezier(.45, .05, .55, .95) infinite;
+}
+.s-voiture::before { content: ""; position: absolute; left: 15%; right: 15%; top: 14%; height: 22%; border-radius: 3px; background: rgba(255, 255, 255, .85); }
+.s-voiture::after { content: ""; position: absolute; left: 10%; right: 10%; top: -10%; height: 10%; border-radius: 50%; background: radial-gradient(closest-side, #fffbd1, transparent); }
+.s-p {
+  right: 8%; top: 42%; width: 22px; height: 22px; border-radius: 5px;
+  display: grid; place-items: center; font: 900 14px/1 inherit; color: #fff;
+  background: #1d4ed8; box-shadow: 0 0 12px rgba(29, 78, 216, .8);
+  animation: s-clignote 1s steps(2) infinite;
+}
+@keyframes s-libre { 0%, 20% { opacity: 0; transform: scale(.6); } 34% { opacity: 1; transform: scale(1.12); } 44%, 80% { opacity: 1; transform: scale(1); } 100% { opacity: 0; } }
+@keyframes s-roule {
+  0% { transform: translate(-260%, 0) rotate(90deg); }
+  35% { transform: translate(0, 0) rotate(90deg); }
+  55% { transform: translate(60%, -40%) rotate(10deg); }
+  70%, 88% { transform: translate(60%, -95%) rotate(0deg); }
+  100% { transform: translate(60%, -95%) rotate(0deg); opacity: 0; }
+}
+@keyframes s-clignote { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .s-libre { opacity: 1; } }
+/* Position :    Le point bleu de votre position émet des ondes GPS ; les stationnements
+   s'allument du plus proche au plus loin. */
+.g-rues {
+  inset: -30%;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 17px, rgba(var(--ch-rgb), .22) 17px 19px),
+    repeating-linear-gradient(90deg, transparent 0 23px, rgba(var(--ch-rgb), .22) 23px 25px);
+  transform: rotate(-34deg);
+}
+.g-moi {
+  left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%;
+  background: #2563eb; border: 3px solid #fff; box-shadow: 0 0 0 1px rgba(37, 99, 235, .4), 0 0 16px rgba(37, 99, 235, .9);
+  animation: g-bat 1.2s ease-in-out infinite;
+}
+.g-onde { left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; background: rgba(37, 99, 235, .25); border: 2px solid rgba(37, 99, 235, .6); opacity: 0; animation: g-onde 2.1s ease-out infinite; }
+.g-onde-2 { animation-delay: .7s; } .g-onde-3 { animation-delay: 1.4s; }
+.g-p {
+  width: 20px; height: 20px; margin: -10px 0 0 -10px; border-radius: 5px;
+  display: grid; place-items: center; font: 900 12px/1 inherit; color: #fff; background: #1d4ed8;
+  box-shadow: 0 0 12px rgba(29, 78, 216, .8); opacity: 0;
+  animation: g-p 2.1s cubic-bezier(.2, .9, .3, 1.6) infinite;
+}
+.g-p1 { top: 38%; left: 64%; animation-delay: .25s; } .g-p2 { top: 70%; left: 34%; animation-delay: .6s; }
+.g-p3 { top: 20%; left: 24%; animation-delay: 1s; } .g-p4 { top: 82%; left: 78%; animation-delay: 1.35s; }
+@keyframes g-bat { 50% { transform: scale(1.15); } }
+@keyframes g-onde { 0% { transform: scale(.8); opacity: 1; } 100% { transform: scale(6); opacity: 0; } }
+@keyframes g-p { 0% { opacity: 0; transform: scale(.2) translateY(8px); } 20% { opacity: 1; transform: scale(1.25); } 32%, 80% { opacity: 1; transform: scale(1); } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .g-p { opacity: 1; } }
+#map-overlay > .ch-dans { width: min(520px, 100%); }

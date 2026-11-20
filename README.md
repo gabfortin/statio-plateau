@@ -65,6 +65,7 @@ Un serveur est nécessaire : le chargement des données ne fonctionne pas en `fi
 | Fichier | Rôle |
 |---|---|
 | `index.html` | Page, métadonnées SEO, JSON-LD, FAQ (dans la fenêtre « À propos ») |
+| `vendor/chargement.js`, `vendor/chargement.css`, `chargement-scenes.css` | Animation d'attente : base commune (copie de `outils/communs/`) et scènes (stationnement, position GPS) |
 | `confidentialite.html` | Politique de confidentialité (Loi 25), même style que la carte |
 | `app.js` | Carte, chargement des données, filtres, géolocalisation |
 | `style.css` | Jetons et composants `gf-` du système de cartes, marqueurs, mode sombre |
@@ -72,7 +73,7 @@ Un serveur est nécessaire : le chargement des données ne fonctionne pas en `fi
 | `vendor/carte/` | Composant de carte commun (modèle `~/Developer/outils/communs/carte/`) : API de Leaflet dessinée par MapLibre, fond OpenFreeMap |
 | `fonts/` | Inter et Poppins hébergées dans le dépôt (licences OFL incluses) |
 | `scripts/update_osm_data.py` | Rafraîchit l'instantané depuis Overpass |
-| `scripts/stamp_assets.py` | Écrit les empreintes `?v=` de `style.css` et `app.js` dans `index.html` |
+| `scripts/stamp_assets.py` | Écrit les empreintes `?v=` des fichiers listés dans `scripts/stamp_assets.json` (`style.css`, `app.js`, composant de carte, `don.js`) dans `index.html`. Copie du modèle commun `outils/communs/stamp_assets.py` : ne pas la modifier ici |
 | `img/` | Icônes, avatar, image de partage (`og.jpg`) |
 | `llms.txt`, `robots.txt`, `sitemap.xml`, `manifest.webmanifest` | Référencement et installation sur téléphone |
 

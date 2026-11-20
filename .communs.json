@@ -11,6 +11,9 @@
     "vendor/carte/carte.js": "carte/carte.js",
     "vendor/carte/carte.css": "carte/carte.css",
     "vendor/carte/LICENSE-maplibre.txt": "carte/LICENSE-maplibre.txt",
-    "vendor/don.js": "don.js"
+    "vendor/don.js": "don.js",
+    "scripts/stamp_assets.py": "stamp_assets.py",
+    "vendor/chargement.css": "chargement.css",
+    "vendor/chargement.js": "chargement.js"
   }
 }
