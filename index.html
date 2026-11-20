@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr-CA">
+<html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -51,7 +51,6 @@
   <script>window.goatcounter = {path: function(p) { return location.host + p }}</script>
   <script data-goatcounter="https://gabfortin.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 
-  <link rel="preconnect" href="https://tile.openstreetmap.org" />
   <!-- Polices hébergées dans le dépôt -->
   <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="fonts/poppins-700-latin.woff2" as="font" type="font/woff2" crossorigin />
@@ -60,7 +59,7 @@
   <!-- Leaflet is self-hosted so the map never depends on a third-party CDN -->
   <link rel="stylesheet" href="vendor/carte/maplibre-gl.css" />
   <link rel="stylesheet" href="vendor/carte/carte.css?v=9cd4843111" />
-  <link rel="stylesheet" href="style.css?v=03e3028d5d" />
+  <link rel="stylesheet" href="style.css?v=bc680dc656" />
   <link rel="stylesheet" href="vendor/chargement.css?v=fbc241999d" />
   <link rel="stylesheet" href="chargement-scenes.css?v=e2be541551" />
 
@@ -227,7 +226,7 @@
   <div class="gf-info-overlay" id="gfInfoOverlay" role="dialog" aria-modal="true" aria-labelledby="gfInfoTitle">
     <div class="gf-info-panel" tabindex="-1">
       <button class="gf-info-close" id="gfInfoClose" type="button" aria-label="Fermer">✕</button>
-      <h2 id="gfInfoTitle">Stationnement hors rue au Plateau-Mont-Royal</h2>
+      <h2 id="gfInfoTitle">À propos de cette carte</h2>
       <p>Cette carte regroupe les stationnements hors rue publics du Plateau-Mont-Royal, à Montréal : terrains extérieurs, garages souterrains et étagés. Chaque stationnement indique son tarif (gratuit, mixte ou payant), ses heures d'ouverture et son nombre de places quand ces informations sont connues. Sélectionnez-en un pour voir ce qui est à 15 minutes de marche ou 10 minutes de vélo, et les pistes cyclables à proximité.</p>
       <p><strong>Données :</strong> <a href="https://www.openstreetmap.org" target="_blank" rel="noopener">OpenStreetMap</a> (licence ODbL), copie intégrée au site et mise à jour chaque semaine<span id="data-freshness-info"></span>. Leur qualité varie : la signalisation sur place a toujours priorité.</p>
 
@@ -255,7 +254,7 @@
         </details>
       </div>
 
-      <h3>Conçu par</h3>
+      <h3>Développé par</h3>
       <a class="gf-person" href="https://gabfortin.com" target="_blank" rel="noopener author">
         <img src="img/avatar.jpg" alt="" width="48" height="48" loading="lazy" />
         <span>

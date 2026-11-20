@@ -3,7 +3,7 @@
 ## 1. Lien vers gabfortin.com ✅
 - [x] Photo de profil dans `img/avatar.jpg` (112 px, 4 Ko)
 - [x] Avatar rond cliquable vers `https://gabfortin.com` dans le badge de crédits en bas à gauche (norme des cartes, nov. 2026 ; avant : dans la barre du haut)
-- [x] Fiche « Conçu par » dans la modale « À propos », avec titre d'élu et liens vers les profils
+- [x] Fiche « Développé par » (avant : « Conçu par ») dans la modale « À propos », avec titre d'élu et liens vers les profils
 
 ---
 
